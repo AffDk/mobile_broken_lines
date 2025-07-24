@@ -146,6 +146,25 @@ sequenceDiagram
     Screen->>Device: Render UI
 ```
 
+#### **Understanding the Bootstrap Flow**
+
+This sequence diagram illustrates the step-by-step process of how a React Native app starts up and displays its first screen. Here's what each step represents:
+
+1. **App starts** - When you tap the app icon or run `npx react-native run-android`, the Android device launches the native app container and initiates the JavaScript runtime.
+
+2. **Load root component** - Metro Bundler (the JavaScript development server) sends the bundled JavaScript code to the device, and the React Native bridge loads the main `App.tsx` component.
+
+3. **Initialize navigation** - The `App.tsx` component renders the `RootNavigator`, which sets up the navigation system and determines which screen to show first based on the app's routing configuration.
+
+4. **Route to first screen** - The navigation system evaluates the current app state (like whether a user is logged in) and routes to the appropriate initial screen (typically `LoginScreen` for new users).
+
+5. **Render UI** - The selected screen component renders its user interface elements, which are then translated through the React Native bridge into native Android UI components that appear on the device screen.
+
+**Why This Flow Matters:**
+- **Performance**: Understanding this flow helps optimize app startup time
+- **Debugging**: When the app crashes on startup, you know which step failed
+- **Architecture**: This pattern ensures proper separation of concerns between navigation, UI, and business logic
+
 **File: `index.js`** - The very first file that runs
 ```javascript
 import {AppRegistry} from 'react-native';
