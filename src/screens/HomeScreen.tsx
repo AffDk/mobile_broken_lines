@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import IconText from '../components/IconText';
 
 import { apiService, BlogPost } from '../services/apiService';
 import { APP_CONFIG } from '../config/config';
@@ -86,7 +86,7 @@ const HomeScreen: React.FC = () => {
           {item.title}
         </Text>
         {item.ai_updated_content && (
-          <Icon name="auto-awesome" size={20} color={APP_CONFIG.COLORS.secondary} />
+          <IconText name="auto-awesome" size={20} color={APP_CONFIG.COLORS.secondary} />
         )}
       </View>
       
@@ -117,7 +117,7 @@ const HomeScreen: React.FC = () => {
           onPress={() => setCurrentPage(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
         >
-          <Icon name="chevron-left" size={24} color={currentPage === 1 ? APP_CONFIG.COLORS.textSecondary : APP_CONFIG.COLORS.primary} />
+          <Text style={[styles.paginationArrow, currentPage === 1 && styles.paginationArrowDisabled]}>‹</Text>
         </TouchableOpacity>
         
         <View style={styles.paginationInfo}>
@@ -134,7 +134,7 @@ const HomeScreen: React.FC = () => {
           onPress={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
         >
-          <Icon name="chevron-right" size={24} color={currentPage === totalPages ? APP_CONFIG.COLORS.textSecondary : APP_CONFIG.COLORS.primary} />
+          <Text style={[styles.paginationArrow, currentPage === totalPages && styles.paginationArrowDisabled]}>›</Text>
         </TouchableOpacity>
       </View>
     );
@@ -162,7 +162,7 @@ const HomeScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Icon name="article" size={64} color={APP_CONFIG.COLORS.textSecondary} />
+            <IconText name="article" size={64} color={APP_CONFIG.COLORS.textSecondary} />
             <Text style={styles.emptyTitle}>No posts yet</Text>
             <Text style={styles.emptySubtitle}>
               Create your first post to get started!
@@ -294,6 +294,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: APP_CONFIG.COLORS.textSecondary,
     marginTop: 2,
+  },
+  paginationArrow: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: APP_CONFIG.COLORS.primary,
+  },
+  paginationArrowDisabled: {
+    color: APP_CONFIG.COLORS.textSecondary,
   },
 });
 

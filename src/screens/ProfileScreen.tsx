@@ -8,6 +8,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import IconText from '../components/IconText';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
@@ -136,7 +137,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout }) => {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
-          <Icon name="person" size={48} color={APP_CONFIG.COLORS.surface} />
+          <IconText name="person" size={48} color={APP_CONFIG.COLORS.surface} />
         </View>
         <Text style={styles.username}>
           {user?.username || 'User'}
@@ -157,7 +158,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout }) => {
         </View>
 
         <View style={styles.statCard}>
-          <Icon name="auto-awesome" size={24} color={APP_CONFIG.COLORS.secondary} />
+          <IconText name="auto-awesome" size={24} color={APP_CONFIG.COLORS.secondary} />
           <Text style={styles.statLabel}>AI Enhanced</Text>
         </View>
 
@@ -174,7 +175,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout }) => {
           onPress={checkConnection}
         >
           <View style={styles.connectionInfo}>
-            <Icon 
+            <IconText 
               name={getConnectionStatusIcon()} 
               size={24} 
               color={getConnectionStatusColor()} 
@@ -218,7 +219,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout }) => {
           onPress={loadUserStats}
           disabled={loading}
         >
-          <Icon name="refresh" size={20} color={APP_CONFIG.COLORS.primary} />
+          <IconText name="refresh" size={20} color={APP_CONFIG.COLORS.primary} />
           <Text style={styles.actionButtonText}>Refresh Data</Text>
           {loading && <ActivityIndicator size="small" color={APP_CONFIG.COLORS.primary} />}
         </TouchableOpacity>
@@ -227,7 +228,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout }) => {
           style={styles.actionButton}
           onPress={clearCache}
         >
-          <Icon name="clear-all" size={20} color={APP_CONFIG.COLORS.warning} />
+          <IconText name="clear-all" size={20} color={APP_CONFIG.COLORS.warning} />
           <Text style={[styles.actionButtonText, { color: APP_CONFIG.COLORS.warning }]}>
             Clear Cache
           </Text>
@@ -237,7 +238,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ user, onLogout }) => {
           style={[styles.actionButton, styles.logoutButton]}
           onPress={handleLogout}
         >
-          <Icon name="logout" size={20} color={APP_CONFIG.COLORS.error} />
+          <IconText name="logout" size={20} color={APP_CONFIG.COLORS.error} />
           <Text style={[styles.actionButtonText, { color: APP_CONFIG.COLORS.error }]}>
             Logout
           </Text>

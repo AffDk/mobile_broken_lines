@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { lightweightLLM, LLMResponse } from './lightweightLLM';
+import OnDeviceLLM, { LLMResponse } from './llmService';
 
 // Types
 interface LoginRequest {
@@ -93,7 +93,9 @@ class LocalApiService {
     try {
       console.log('🤖 Starting LLM enhancement...');
       
-      const response: LLMResponse = await lightweightLLM.enhanceText(content);
+      const llm = new OnDeviceLLM();
+      await llm.initialize();
+      const response: LLMResponse = await llm.enhanceText(content);
       
       // Log enhancement details
       console.log(`✅ LLM Enhancement Complete:`);

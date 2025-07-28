@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,16 +12,23 @@ import {
   ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import IconText from '../components/IconText';
+import LLMConfigComponent from '../components/LLMConfigComponent';
 
 import { apiService } from '../services/apiService';
 import { APP_CONFIG } from '../config/config';
+import OnDeviceLLM, { SystemPromptConfig } from '../services/llmService';
 
 const CreatePostScreen: React.FC = () => {
   const navigation = useNavigation();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const [enhancing, setEnhancing] = useState(false);
+  const [showLLMConfig, setShowLLMConfig] = useState(false);
+  
+  // LLM instance
+  const llmRef = useRef<OnDeviceLLM>(new OnDeviceLLM());
 
   const validateForm = () => {
     if (!title.trim()) {
@@ -98,6 +105,83 @@ const CreatePostScreen: React.FC = () => {
     );
   };
 
+  const enhanceContent = async () => {
+    if (!content.trim()) {
+      Alert.alert('Error', 'Please enter some content to enhance');
+      return;
+    }
+
+    setEnhancing(true);
+    try {
+      const result = await llmRef.current.enhanceText(content);
+      
+      Alert.alert(
+        'Content Enhanced',
+        `✨ Your content has been enhanced!\n\nProcessing time: ${result.processingTime}ms\nModel: ${result.modelUsed}`,
+        [
+          {
+            text: 'Keep Original',
+            style: 'cancel',
+          },
+          {
+            text: 'Use Enhanced',
+            onPress: () => setContent(result.enhancedText),
+          },
+          {
+            text: 'Preview Both',
+            onPress: () => showEnhancementPreview(content, result.enhancedText),
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Enhancement error:', error);
+      Alert.alert('Error', 'Failed to enhance content. Please try again.');
+    } finally {
+      setEnhancing(false);
+    }
+  };
+
+  const showEnhancementPreview = (original: string, enhanced: string) => {
+    Alert.alert(
+      'Enhancement Preview',
+      `Original:\n"${original.substring(0, 100)}${original.length > 100 ? '...' : ''}"\n\nEnhanced:\n"${enhanced.substring(0, 100)}${enhanced.length > 100 ? '...' : ''}"`,
+      [
+        { text: 'Keep Original', style: 'cancel' },
+        { text: 'Use Enhanced', onPress: () => setContent(enhanced) },
+      ]
+    );
+  };
+
+  const enhanceTitle = async () => {
+    if (!title.trim()) {
+      Alert.alert('Error', 'Please enter a title to enhance');
+      return;
+    }
+
+    setEnhancing(true);
+    try {
+      const result = await llmRef.current.enhanceText(title);
+      
+      Alert.alert(
+        'Title Enhanced',
+        `Original: "${title}"\n\nEnhanced: "${result.enhancedText}"`,
+        [
+          { text: 'Keep Original', style: 'cancel' },
+          { text: 'Use Enhanced', onPress: () => setTitle(result.enhancedText) },
+        ]
+      );
+    } catch (error) {
+      console.error('Title enhancement error:', error);
+      Alert.alert('Error', 'Failed to enhance title. Please try again.');
+    } finally {
+      setEnhancing(false);
+    }
+  };
+
+  const handleLLMConfigUpdate = (config: SystemPromptConfig) => {
+    console.log('LLM configuration updated:', config);
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -105,14 +189,38 @@ const CreatePostScreen: React.FC = () => {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
-          <Icon name="create" size={32} color={APP_CONFIG.COLORS.primary} />
+          <IconText name="create" size={32} color={APP_CONFIG.COLORS.primary} />
           <Text style={styles.headerTitle}>Create New Post</Text>
           <Text style={styles.headerSubtitle}>Share your thoughts with the world</Text>
+          
+          <TouchableOpacity
+            style={styles.configButton}
+            onPress={() => setShowLLMConfig(true)}
+          >
+            <IconText name="settings" size={20} color={APP_CONFIG.COLORS.primary} />
+            <Text style={styles.configButtonText}>AI Settings</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.formContainer}>
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Title *</Text>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Title *</Text>
+              <TouchableOpacity
+                style={styles.enhanceButton}
+                onPress={enhanceTitle}
+                disabled={enhancing || !title.trim()}
+              >
+                {enhancing ? (
+                  <ActivityIndicator size="small" color={APP_CONFIG.COLORS.primary} />
+                ) : (
+                  <>
+                    <IconText name="auto-fix-high" size={16} color={APP_CONFIG.COLORS.primary} />
+                    <Text style={styles.enhanceButtonText}>Enhance</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
             <TextInput
               style={styles.titleInput}
               value={title}
@@ -120,14 +228,30 @@ const CreatePostScreen: React.FC = () => {
               placeholder="Enter an engaging title..."
               placeholderTextColor={APP_CONFIG.COLORS.textSecondary}
               maxLength={200}
-              editable={!loading}
+              editable={!loading && !enhancing}
               multiline
             />
             <Text style={styles.charCount}>{title.length}/200</Text>
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Content *</Text>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Content *</Text>
+              <TouchableOpacity
+                style={styles.enhanceButton}
+                onPress={enhanceContent}
+                disabled={enhancing || !content.trim()}
+              >
+                {enhancing ? (
+                  <ActivityIndicator size="small" color={APP_CONFIG.COLORS.primary} />
+                ) : (
+                  <>
+                    <IconText name="auto-fix-high" size={16} color={APP_CONFIG.COLORS.primary} />
+                    <Text style={styles.enhanceButtonText}>Enhance</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
             <TextInput
               style={styles.contentInput}
               value={content}
@@ -136,7 +260,7 @@ const CreatePostScreen: React.FC = () => {
               placeholderTextColor={APP_CONFIG.COLORS.textSecondary}
               multiline
               textAlignVertical="top"
-              editable={!loading}
+              editable={!loading && !enhancing}
             />
           </View>
 
@@ -146,7 +270,7 @@ const CreatePostScreen: React.FC = () => {
               onPress={clearForm}
               disabled={loading || (!title && !content)}
             >
-              <Icon name="clear" size={20} color={APP_CONFIG.COLORS.textSecondary} />
+              <IconText name="clear" size={20} color={APP_CONFIG.COLORS.textSecondary} />
               <Text style={styles.clearButtonText}>Clear</Text>
             </TouchableOpacity>
 
@@ -159,7 +283,7 @@ const CreatePostScreen: React.FC = () => {
                 <ActivityIndicator color={APP_CONFIG.COLORS.surface} />
               ) : (
                 <>
-                  <Icon name="publish" size={20} color={APP_CONFIG.COLORS.surface} />
+                  <IconText name="publish" size={20} color={APP_CONFIG.COLORS.surface} />
                   <Text style={styles.createButtonText}>Publish</Text>
                 </>
               )}
@@ -168,12 +292,21 @@ const CreatePostScreen: React.FC = () => {
         </View>
 
         <View style={styles.tipsContainer}>
-          <Text style={styles.tipsTitle}>💡 Writing Tips</Text>
-          <Text style={styles.tipText}>• Use a clear, descriptive title</Text>
-          <Text style={styles.tipText}>• Break up long content with paragraphs</Text>
-          <Text style={styles.tipText}>• You can enhance your post with AI later</Text>
+          <Text style={styles.tipsTitle}>🤖 AI-Powered Writing Tips</Text>
+          <Text style={styles.tipText}>• Use AI enhancement to improve grammar and flow</Text>
+          <Text style={styles.tipText}>• Configure AI settings for different writing styles</Text>
+          <Text style={styles.tipText}>• AI works completely offline - no internet needed!</Text>
+          <Text style={styles.tipText}>• Try enhancing titles and content separately</Text>
         </View>
       </ScrollView>
+
+      {/* LLM Configuration Modal */}
+      <LLMConfigComponent
+        llm={llmRef.current}
+        visible={showLLMConfig}
+        onClose={() => setShowLLMConfig(false)}
+        onConfigUpdate={handleLLMConfigUpdate}
+      />
     </KeyboardAvoidingView>
   );
 };
@@ -190,6 +323,23 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: APP_CONFIG.SPACING.xl,
+  },
+  configButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: APP_CONFIG.SPACING.md,
+    paddingHorizontal: APP_CONFIG.SPACING.md,
+    paddingVertical: APP_CONFIG.SPACING.sm,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: APP_CONFIG.COLORS.primary,
+    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+  },
+  configButtonText: {
+    color: APP_CONFIG.COLORS.primary,
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: APP_CONFIG.SPACING.xs,
   },
   headerTitle: {
     fontSize: 24,
@@ -216,11 +366,32 @@ const styles = StyleSheet.create({
   inputContainer: {
     marginBottom: APP_CONFIG.SPACING.lg,
   },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: APP_CONFIG.SPACING.sm,
+  },
   label: {
     fontSize: 16,
     fontWeight: '500',
     color: APP_CONFIG.COLORS.text,
-    marginBottom: APP_CONFIG.SPACING.sm,
+  },
+  enhanceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: APP_CONFIG.SPACING.sm,
+    paddingVertical: APP_CONFIG.SPACING.xs,
+    borderRadius: 6,
+    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+    borderWidth: 1,
+    borderColor: APP_CONFIG.COLORS.primary,
+  },
+  enhanceButtonText: {
+    color: APP_CONFIG.COLORS.primary,
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 4,
   },
   titleInput: {
     borderWidth: 1,

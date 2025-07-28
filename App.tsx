@@ -21,6 +21,11 @@ import RootNavigator from './src/navigation/RootNavigator';
 import { User, apiService } from './src/services/apiService';
 import { APP_CONFIG } from './src/config/config';
 
+// Force English locale for the app
+import { I18nManager } from 'react-native';
+I18nManager.allowRTL(false);
+I18nManager.forceRTL(false);
+
 // Types
 interface AuthState {
   isAuthenticated: boolean;

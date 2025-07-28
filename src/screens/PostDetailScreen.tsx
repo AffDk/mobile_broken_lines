@@ -12,7 +12,7 @@ import {
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import IconText from '../components/IconText';
 
 import { apiService, BlogPost } from '../services/apiService';
 import { APP_CONFIG } from '../config/config';
@@ -181,7 +181,7 @@ const PostDetailScreen: React.FC = () => {
                 ]}
                 onPress={() => setShowAIVersion(true)}
               >
-                <Icon 
+                <IconText 
                   name="auto-awesome" 
                   size={16} 
                   color={showAIVersion ? APP_CONFIG.COLORS.surface : APP_CONFIG.COLORS.secondary} 
@@ -207,7 +207,7 @@ const PostDetailScreen: React.FC = () => {
           style={styles.actionButton}
           onPress={handleShare}
         >
-          <Icon name="share" size={24} color={APP_CONFIG.COLORS.primary} />
+          <IconText name="share" size={24} color={APP_CONFIG.COLORS.primary} />
         </TouchableOpacity>
 
         {!post.ai_updated_content && (
@@ -219,7 +219,7 @@ const PostDetailScreen: React.FC = () => {
             {enhancing ? (
               <ActivityIndicator color={APP_CONFIG.COLORS.secondary} />
             ) : (
-              <Icon name="auto-awesome" size={24} color={APP_CONFIG.COLORS.secondary} />
+              <IconText name="auto-awesome" size={24} color={APP_CONFIG.COLORS.secondary} />
             )}
           </TouchableOpacity>
         )}
@@ -228,14 +228,14 @@ const PostDetailScreen: React.FC = () => {
           style={styles.actionButton}
           onPress={() => navigation.navigate('EditPost', { postId: post.id })}
         >
-          <Icon name="edit" size={24} color={APP_CONFIG.COLORS.primary} />
+          <IconText name="edit" size={24} color={APP_CONFIG.COLORS.primary} />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.actionButton}
           onPress={handleDeletePost}
         >
-          <Icon name="delete" size={24} color={APP_CONFIG.COLORS.error} />
+          <IconText name="delete" size={24} color={APP_CONFIG.COLORS.error} />
         </TouchableOpacity>
       </View>
     </View>

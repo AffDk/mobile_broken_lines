@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -14,11 +14,13 @@ import {
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import IconText from '../components/IconText';
+import LLMConfigComponent from '../components/LLMConfigComponent';
 
 import { apiService, BlogPost } from '../services/apiService';
 import { APP_CONFIG } from '../config/config';
 import { RootStackParamList } from '../navigation/RootNavigator';
+import OnDeviceLLM, { SystemPromptConfig } from '../services/llmService';
 
 type EditPostScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 type EditPostScreenRouteProp = RouteProp<RootStackParamList, 'EditPost'>;
@@ -33,7 +35,12 @@ const EditPostScreen: React.FC = () => {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [enhancing, setEnhancing] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [showLLMConfig, setShowLLMConfig] = useState(false);
+  
+  // LLM instance
+  const llmRef = useRef<OnDeviceLLM>(new OnDeviceLLM());
 
   useEffect(() => {
     loadPost();
@@ -167,11 +174,11 @@ const EditPostScreen: React.FC = () => {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
-          <Icon name="edit" size={32} color={APP_CONFIG.COLORS.primary} />
+          <IconText name="edit" size={32} color={APP_CONFIG.COLORS.primary} />
           <Text style={styles.headerTitle}>Edit Post</Text>
           {post.ai_updated_content && (
             <View style={styles.aiIndicator}>
-              <Icon name="auto-awesome" size={16} color={APP_CONFIG.COLORS.secondary} />
+              <IconText name="auto-awesome" size={16} color={APP_CONFIG.COLORS.secondary} />
               <Text style={styles.aiText}>Editing AI-enhanced version</Text>
             </View>
           )}
@@ -213,7 +220,7 @@ const EditPostScreen: React.FC = () => {
               onPress={handleCancel}
               disabled={saving}
             >
-              <Icon name="close" size={20} color={APP_CONFIG.COLORS.textSecondary} />
+              <IconText name="close" size={20} color={APP_CONFIG.COLORS.textSecondary} />
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
 
@@ -230,7 +237,7 @@ const EditPostScreen: React.FC = () => {
                 <ActivityIndicator color={APP_CONFIG.COLORS.surface} />
               ) : (
                 <>
-                  <Icon name="save" size={20} color={APP_CONFIG.COLORS.surface} />
+                  <IconText name="save" size={20} color={APP_CONFIG.COLORS.surface} />
                   <Text style={styles.saveButtonText}>Save Changes</Text>
                 </>
               )}
@@ -240,7 +247,7 @@ const EditPostScreen: React.FC = () => {
 
         {hasChanges && (
           <View style={styles.changesIndicator}>
-            <Icon name="info" size={16} color={APP_CONFIG.COLORS.warning} />
+            <IconText name="info" size={16} color={APP_CONFIG.COLORS.warning} />
             <Text style={styles.changesText}>You have unsaved changes</Text>
           </View>
         )}

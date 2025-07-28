@@ -809,6 +809,63 @@ npx react-native start --reset-cache
 
 ---
 
+## 📦 Building Standalone APKs for Distribution
+
+### **Debug vs Release APKs**
+
+There are two types of APK builds in React Native:
+
+| **Debug APK** | **Release APK** |
+|---------------|----------------|
+| Requires Metro bundler running | Completely standalone |
+| For development/testing | For production distribution |
+| Larger file size | Optimized and compressed |
+| `app-debug.apk` | `app-release.apk` |
+
+### **Building a Release APK**
+
+To create a standalone APK that doesn't need Metro bundler:
+
+```powershell
+cd C:\App\android
+.\gradlew assembleRelease
+```
+
+**What happens during release build:**
+1. **JavaScript Bundling**: All TypeScript/JavaScript code is compiled and bundled into a single file
+2. **Asset Optimization**: Images and other assets are compressed
+3. **Code Minification**: JavaScript code is minified to reduce size
+4. **Native Compilation**: Android native libraries are compiled for multiple architectures
+5. **APK Assembly**: Everything is packaged into a single installable APK file
+
+### **Release APK Location**
+
+The standalone APK will be created at:
+```
+C:\App\android\app\build\outputs\apk\release\app-release.apk
+```
+
+### **Installing Release APK**
+
+1. **Copy APK to phone**: Transfer `app-release.apk` to your Android device
+2. **Enable unknown sources**: Settings → Security → Install unknown apps → Allow from file manager
+3. **Install**: Tap the APK file and follow installation prompts
+4. **No USB/Metro needed**: The app runs completely independently
+
+### **File Size Comparison**
+
+- **Debug APK**: ~80-120MB (includes development tools)
+- **Release APK**: ~30-50MB (optimized for production)
+
+### **Release Build Benefits**
+
+- ✅ **Standalone**: No computer/Metro connection required
+- ✅ **Optimized**: Better performance and smaller size
+- ✅ **Production-ready**: Ready for app store distribution
+- ✅ **Offline**: Works without internet after installation
+
+---
+
 ## 🎓 Next Steps for Learning
 
 ### **Intermediate Topics**
@@ -816,7 +873,7 @@ npx react-native start --reset-cache
 2. **Context API**: Global state management
 3. **Performance Optimization**: useMemo, useCallback
 4. **Testing**: Unit tests with Jest
-5. **Publishing**: Building release APKs
+5. **Publishing**: App store distribution
 
 ### **Advanced Topics**
 1. **Native Modules**: Writing custom native code

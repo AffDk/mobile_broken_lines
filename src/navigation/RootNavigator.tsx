@@ -1,7 +1,8 @@
 import React from 'react';
+import { Text } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import IconText from '../components/IconText';
 
 // Import screens
 import {
@@ -66,7 +67,7 @@ function MainTabNavigator({ user, onLogout }: MainTabNavigatorProps) {
             iconName = 'circle';
           }
 
-          return <Icon name={iconName} size={size} color={color} />;
+          return <IconText name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#007AFF',
         tabBarInactiveTintColor: 'gray',
