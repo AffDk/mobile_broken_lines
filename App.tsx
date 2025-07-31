@@ -52,10 +52,27 @@ function App(): React.JSX.Element {
       // Initialize demo data if needed
       await apiService.initializeDemoData();
       
+      // Preload LLM service safely (non-blocking)
+      initializeLLMServiceSafely();
+      
       // Load auth state
       await loadAuthState();
     } catch (error) {
       console.error('Error initializing app:', error);
+    }
+  };
+
+  const initializeLLMServiceSafely = async () => {
+    try {
+      // Import and initialize LLM service in the background
+      const { default: realLLMService } = await import('./src/services/realLLMService');
+      
+      // Initialize in background, don't wait for it
+      realLLMService.initialize().catch(error => {
+        console.log('⚠️ LLM service initialization failed, will use fallback:', error);
+      });
+    } catch (error) {
+      console.log('⚠️ Failed to import LLM service, will use fallback when needed:', error);
     }
   };
 

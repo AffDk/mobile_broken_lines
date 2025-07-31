@@ -6,3 +6,4 @@ export { default as CreatePostScreen } from './CreatePostScreen';
 export { default as EditPostScreen } from './EditPostScreen';
 export { default as PostDetailScreen } from './PostDetailScreen';
 export { default as ProfileScreen } from './ProfileScreen';
+export { default as ModelDownloadScreen } from './ModelDownloadScreen';

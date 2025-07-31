@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ import LLMConfigComponent from '../components/LLMConfigComponent';
 
 import { apiService } from '../services/apiService';
 import { APP_CONFIG } from '../config/config';
-import OnDeviceLLM, { SystemPromptConfig } from '../services/llmService';
+import realLLMService, { SystemPromptConfig } from '../services/realLLMService';
 
 const CreatePostScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -27,8 +27,28 @@ const CreatePostScreen: React.FC = () => {
   const [enhancing, setEnhancing] = useState(false);
   const [showLLMConfig, setShowLLMConfig] = useState(false);
   
-  // LLM instance
-  const llmRef = useRef<OnDeviceLLM>(new OnDeviceLLM());
+  // AI Enhancement state
+  const [originalContent, setOriginalContent] = useState('');
+  const [enhancedContent, setEnhancedContent] = useState('');
+  const [isShowingEnhanced, setIsShowingEnhanced] = useState(false);
+  const [hasEnhancedVersion, setHasEnhancedVersion] = useState(false);
+
+  // Initialize LLM service when component mounts
+  useEffect(() => {
+    const initializeLLM = async () => {
+      try {
+        // Add delay to prevent simultaneous initialization attempts
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 2000));
+        await realLLMService.initialize();
+        console.log('✅ LLM service ready for CreatePostScreen');
+      } catch (error) {
+        console.log('⚠️ LLM initialization completed with fallback for CreatePostScreen');
+      }
+    };
+    
+    // Don't block the component, initialize in background
+    initializeLLM();
+  }, []);
 
   const validateForm = () => {
     if (!title.trim()) {
@@ -99,6 +119,11 @@ const CreatePostScreen: React.FC = () => {
           onPress: () => {
             setTitle('');
             setContent('');
+            // Reset AI enhancement state
+            setOriginalContent('');
+            setEnhancedContent('');
+            setHasEnhancedVersion(false);
+            setIsShowingEnhanced(false);
           },
         },
       ]
@@ -113,31 +138,56 @@ const CreatePostScreen: React.FC = () => {
 
     setEnhancing(true);
     try {
-      const result = await llmRef.current.enhanceText(content);
+      const result = await realLLMService.enhanceText(content);
+      
+      // Store both versions
+      setOriginalContent(content);
+      setEnhancedContent(result.enhancedText);
+      setHasEnhancedVersion(true);
+      setIsShowingEnhanced(true); // Switch to enhanced version
+      setContent(result.enhancedText); // Update the displayed content
+      
+      // Create status message based on whether fallback was used
+      const statusMessage = result.isFallback 
+        ? `⚠️ Enhanced using intelligent fallback system (${result.fallbackReason})\n\nProcessing time: ${result.processingTime}ms\nModel: ${result.modelUsed}`
+        : `✅ Enhanced using real AI model\n\nProcessing time: ${result.processingTime}ms\nModel: ${result.modelUsed}\nConfidence: ${(result.confidence * 100).toFixed(1)}%`;
       
       Alert.alert(
-        'Content Enhanced',
-        `✨ Your content has been enhanced!\n\nProcessing time: ${result.processingTime}ms\nModel: ${result.modelUsed}`,
-        [
-          {
-            text: 'Keep Original',
-            style: 'cancel',
-          },
-          {
-            text: 'Use Enhanced',
-            onPress: () => setContent(result.enhancedText),
-          },
-          {
-            text: 'Preview Both',
-            onPress: () => showEnhancementPreview(content, result.enhancedText),
-          },
-        ]
+        'Content Enhanced! ✨',
+        `Your content has been enhanced and saved. You can now toggle between original and enhanced versions using the toggle button.\n\n${statusMessage}`,
+        [{ text: 'Got it!', style: 'default' }]
       );
     } catch (error) {
       console.error('Enhancement error:', error);
       Alert.alert('Error', 'Failed to enhance content. Please try again.');
     } finally {
       setEnhancing(false);
+    }
+  };
+
+  const toggleContentVersion = () => {
+    if (!hasEnhancedVersion) return;
+    
+    if (isShowingEnhanced) {
+      // Switch to original
+      setContent(originalContent);
+      setIsShowingEnhanced(false);
+    } else {
+      // Switch to enhanced
+      setContent(enhancedContent);
+      setIsShowingEnhanced(true);
+    }
+  };
+
+  const handleContentChange = (newContent: string) => {
+    setContent(newContent);
+    // If user manually edits, update the appropriate version
+    if (hasEnhancedVersion) {
+      if (isShowingEnhanced) {
+        setEnhancedContent(newContent);
+      } else {
+        setOriginalContent(newContent);
+      }
     }
   };
 
@@ -160,11 +210,16 @@ const CreatePostScreen: React.FC = () => {
 
     setEnhancing(true);
     try {
-      const result = await llmRef.current.enhanceText(title);
+      const result = await realLLMService.enhanceText(title);
+      
+      // Create status message based on whether fallback was used
+      const statusInfo = result.isFallback 
+        ? `\n\n⚠️ Enhanced using intelligent fallback system\nModel: ${result.modelUsed}`
+        : `\n\n✅ Enhanced using real AI model\nModel: ${result.modelUsed}\nConfidence: ${(result.confidence * 100).toFixed(1)}%`;
       
       Alert.alert(
         'Title Enhanced',
-        `Original: "${title}"\n\nEnhanced: "${result.enhancedText}"`,
+        `Original: "${title}"\n\nEnhanced: "${result.enhancedText}"${statusInfo}`,
         [
           { text: 'Keep Original', style: 'cancel' },
           { text: 'Use Enhanced', onPress: () => setTitle(result.enhancedText) },
@@ -237,31 +292,63 @@ const CreatePostScreen: React.FC = () => {
           <View style={styles.inputContainer}>
             <View style={styles.labelRow}>
               <Text style={styles.label}>Content *</Text>
-              <TouchableOpacity
-                style={styles.enhanceButton}
-                onPress={enhanceContent}
-                disabled={enhancing || !content.trim()}
-              >
-                {enhancing ? (
-                  <ActivityIndicator size="small" color={APP_CONFIG.COLORS.primary} />
-                ) : (
-                  <>
-                    <IconText name="auto-fix-high" size={16} color={APP_CONFIG.COLORS.primary} />
-                    <Text style={styles.enhanceButtonText}>Enhance</Text>
-                  </>
+              <View style={styles.contentButtonsRow}>
+                {hasEnhancedVersion && (
+                  <TouchableOpacity
+                    style={[styles.toggleButton, isShowingEnhanced && styles.activeToggleButton]}
+                    onPress={toggleContentVersion}
+                    disabled={enhancing}
+                  >
+                    <IconText 
+                      name={isShowingEnhanced ? "auto-fix-high" : "edit"} 
+                      size={14} 
+                      color={isShowingEnhanced ? APP_CONFIG.COLORS.surface : APP_CONFIG.COLORS.primary} 
+                    />
+                    <Text style={[
+                      styles.toggleButtonText, 
+                      isShowingEnhanced && styles.activeToggleButtonText
+                    ]}>
+                      {isShowingEnhanced ? "AI ✨" : "Original"}
+                    </Text>
+                  </TouchableOpacity>
                 )}
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.enhanceButton}
+                  onPress={enhanceContent}
+                  disabled={enhancing || !content.trim()}
+                >
+                  {enhancing ? (
+                    <ActivityIndicator size="small" color={APP_CONFIG.COLORS.primary} />
+                  ) : (
+                    <>
+                      <IconText name="auto-fix-high" size={16} color={APP_CONFIG.COLORS.primary} />
+                      <Text style={styles.enhanceButtonText}>Enhance</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
             <TextInput
               style={styles.contentInput}
               value={content}
-              onChangeText={setContent}
+              onChangeText={handleContentChange}
               placeholder="Write your post content here..."
               placeholderTextColor={APP_CONFIG.COLORS.textSecondary}
               multiline
+              scrollEnabled={true}
               textAlignVertical="top"
               editable={!loading && !enhancing}
             />
+            <View style={styles.contentInfoRow}>
+              <Text style={styles.charCount}>
+                {content.length} characters
+              </Text>
+              {hasEnhancedVersion && (
+                <Text style={styles.versionIndicator}>
+                  Showing: {isShowingEnhanced ? "AI Enhanced ✨" : "Original 📝"}
+                </Text>
+              )}
+            </View>
           </View>
 
           <View style={styles.buttonContainer}>
@@ -302,7 +389,7 @@ const CreatePostScreen: React.FC = () => {
 
       {/* LLM Configuration Modal */}
       <LLMConfigComponent
-        llm={llmRef.current}
+        llm={realLLMService}
         visible={showLLMConfig}
         onClose={() => setShowLLMConfig(false)}
         onConfigUpdate={handleLLMConfigUpdate}
@@ -319,6 +406,7 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     padding: APP_CONFIG.SPACING.lg,
+    paddingBottom: APP_CONFIG.SPACING.xl * 2, // Extra bottom padding for save button visibility
   },
   header: {
     alignItems: 'center',
@@ -413,7 +501,9 @@ const styles = StyleSheet.create({
     color: APP_CONFIG.COLORS.text,
     backgroundColor: APP_CONFIG.COLORS.surface,
     minHeight: 200,
+    maxHeight: 300, // Limit max height so save button stays visible
     lineHeight: 24,
+    textAlignVertical: 'top', // Ensure text starts at top
   },
   charCount: {
     fontSize: 12,
@@ -477,6 +567,44 @@ const styles = StyleSheet.create({
     color: APP_CONFIG.COLORS.textSecondary,
     marginBottom: APP_CONFIG.SPACING.xs,
     lineHeight: 20,
+  },
+  contentButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: APP_CONFIG.SPACING.sm,
+  },
+  toggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: APP_CONFIG.SPACING.sm,
+    paddingVertical: APP_CONFIG.SPACING.xs,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: APP_CONFIG.COLORS.primary,
+    backgroundColor: 'transparent',
+  },
+  activeToggleButton: {
+    backgroundColor: APP_CONFIG.COLORS.primary,
+  },
+  toggleButtonText: {
+    fontSize: 12,
+    color: APP_CONFIG.COLORS.primary,
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+  activeToggleButtonText: {
+    color: APP_CONFIG.COLORS.surface,
+  },
+  contentInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: APP_CONFIG.SPACING.xs,
+  },
+  versionIndicator: {
+    fontSize: 12,
+    color: APP_CONFIG.COLORS.secondary,
+    fontWeight: '500',
   },
 });
 

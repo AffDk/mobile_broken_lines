@@ -13,6 +13,7 @@ import {
   EditPostScreen,
   PostDetailScreen,
   ProfileScreen,
+  ModelDownloadScreen,
 } from '../screens';
 
 // Types for navigation props
@@ -30,6 +31,7 @@ export type RootStackParamList = {
 export type MainTabParamList = {
   Home: undefined;
   CreatePost: undefined;
+  Models: undefined;
   Profile: undefined;
 };
 
@@ -83,6 +85,11 @@ function MainTabNavigator({ user, onLogout }: MainTabNavigatorProps) {
         name="CreatePost" 
         component={CreatePostScreen} 
         options={{ title: 'Create' }}
+      />
+      <Tab.Screen 
+        name="Models" 
+        component={ModelDownloadScreen} 
+        options={{ title: 'AI Models' }}
       />
       <Tab.Screen 
         name="Profile" 

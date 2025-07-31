@@ -35,18 +35,18 @@ class OnDeviceLLM {
     };
 
     this.systemPrompts = {
-      blog_enhancer: `You are a professional blog post editor. Your task is to enhance text while maintaining the author's voice. Focus on improving clarity, fixing grammar, enhancing engagement, and making sentences flow better. Keep responses concise and natural.`,
+      blog_enhancer: `You are a professional blog post editor and creative writer. Transform text into engaging, expanded blog content that captivates readers. Add compelling introductions, detailed explanations, relevant examples, vivid descriptions, and interesting anecdotes. Make the content 2-3 times longer while maintaining the author's voice. Focus on storytelling, reader engagement, and making complex ideas accessible through creative analogies and examples.`,
 
-      creative_writer: `You are a creative writing assistant. Enhance text with more vivid language, better storytelling elements, improved narrative flow, creative metaphors, and emotional resonance. Keep the original meaning while making it more compelling.`,
+      creative_writer: `You are a master storyteller and creative writing expert. Dramatically expand and enhance text with rich, vivid language, compelling narratives, sensory details, emotional depth, creative metaphors, and imaginative scenarios. Transform simple statements into engaging stories with character, conflict, and resolution. Make it come alive with specific details, dialogue where appropriate, and immersive descriptions that paint pictures in the reader's mind.`,
 
-      technical_writer: `You are a technical writing expert. Enhance text for clarity, precision, logical structure, technical accuracy, and professional tone. Focus on making complex ideas accessible while maintaining accuracy.`,
+      technical_writer: `You are a technical writing expert who makes complex topics fascinating. Expand technical content with detailed explanations, real-world applications, step-by-step breakdowns, practical examples, case studies, and analogies that make difficult concepts accessible. Add context about why topics matter, how they connect to broader themes, and include specific scenarios where readers might apply this knowledge.`,
 
-      casual_writer: `You are a casual writing assistant. Make text more conversational, friendly, easy to read, relatable, engaging, natural, and approachable. Keep it warm and human while improving quality.`
+      casual_writer: `You are a friendly, engaging writer who makes content come alive through storytelling. Expand text with personal anecdotes, relatable examples, conversational asides, interesting tangents, humor where appropriate, and vivid descriptions. Make it feel like a conversation with a knowledgeable friend who loves to share fascinating details and paint pictures with words.`
     };
   }
 
   private getDefaultSystemPrompt(): string {
-    return `You are a helpful writing assistant. Enhance the given text by improving grammar, clarity, and engagement while maintaining the original meaning and tone. Respond only with the enhanced text.`;
+    return `You are a creative writing assistant. Transform the given text by expanding it with vivid details, interesting examples, engaging storytelling elements, and compelling language. Make it 2-3 times longer while maintaining the original meaning. Add relevant context, paint pictures with words, include specific examples, and make it more captivating and interesting to read. Respond only with the enhanced, expanded text.`;
   }
 
   async initialize(): Promise<boolean> {
@@ -123,11 +123,13 @@ class OnDeviceLLM {
   private async performEnhancement(text: string, config: LLMConfig): Promise<string> {
     let enhanced = text;
     
-    // Enhancement pipeline
+    // Enhancement pipeline with expansion
     enhanced = this.improveGrammar(enhanced);
     enhanced = this.enhanceVocabulary(enhanced);
+    enhanced = this.expandContent(enhanced); // New expansion step
     enhanced = this.improveStructure(enhanced);
     enhanced = this.applyStyleEnhancements(enhanced, config.systemPrompt);
+    enhanced = this.addCreativeElements(enhanced); // New creative step
     enhanced = this.finalPolish(enhanced);
     
     return enhanced.trim();
@@ -163,18 +165,33 @@ class OnDeviceLLM {
     let enhanced = text;
     
     const vocabularyMap = [
-      { from: /\bgood\b/gi, to: 'excellent' },
-      { from: /\bbad\b/gi, to: 'problematic' },
-      { from: /\bbig\b/gi, to: 'substantial' },
-      { from: /\bsmall\b/gi, to: 'modest' },
-      { from: /\bvery\s+important\b/gi, to: 'crucial' },
-      { from: /\bvery\s+good\b/gi, to: 'outstanding' },
-      { from: /\ba lot of\b/gi, to: 'numerous' },
-      { from: /\bhelp\s+with\b/gi, to: 'assist in' },
-      { from: /\bmake\s+better\b/gi, to: 'enhance' },
-      { from: /\bfind\s+out\b/gi, to: 'discover' },
-      { from: /\bthink\s+about\b/gi, to: 'consider' },
-      { from: /\bshow\s+that\b/gi, to: 'demonstrate that' },
+      // Enhanced creative vocabulary replacements
+      { from: /\bgood\b/gi, to: 'exceptional' },
+      { from: /\bbad\b/gi, to: 'deeply problematic' },
+      { from: /\bbig\b/gi, to: 'remarkably substantial' },
+      { from: /\bsmall\b/gi, to: 'elegantly modest' },
+      { from: /\bvery\s+important\b/gi, to: 'absolutely crucial' },
+      { from: /\bvery\s+good\b/gi, to: 'truly outstanding' },
+      { from: /\ba lot of\b/gi, to: 'an impressive array of' },
+      { from: /\bhelp\s+with\b/gi, to: 'expertly assist in' },
+      { from: /\bmake\s+better\b/gi, to: 'dramatically enhance' },
+      { from: /\bfind\s+out\b/gi, to: 'uncover and discover' },
+      { from: /\bthink\s+about\b/gi, to: 'carefully contemplate' },
+      { from: /\bshow\s+that\b/gi, to: 'vividly demonstrate that' },
+      { from: /\binteresting\b/gi, to: 'fascinating and thought-provoking' },
+      { from: /\bnice\b/gi, to: 'delightfully appealing' },
+      { from: /\bgreat\b/gi, to: 'absolutely magnificent' },
+      { from: /\bamazing\b/gi, to: 'breathtakingly extraordinary' },
+      { from: /\bawesome\b/gi, to: 'genuinely awe-inspiring' },
+      { from: /\bperfect\b/gi, to: 'flawlessly executed' },
+      { from: /\bterrible\b/gi, to: 'absolutely dreadful' },
+      { from: /\bhorrible\b/gi, to: 'utterly appalling' },
+      { from: /\bstupid\b/gi, to: 'remarkably misguided' },
+      { from: /\bsmart\b/gi, to: 'brilliantly intelligent' },
+      { from: /\bbright\b/gi, to: 'luminously radiant' },
+      { from: /\bdark\b/gi, to: 'mysteriously shadowed' },
+      { from: /\bold\b/gi, to: 'timelessly aged' },
+      { from: /\bnew\b/gi, to: 'refreshingly innovative' }
     ];
     
     vocabularyMap.forEach(mapping => {
@@ -231,6 +248,162 @@ class OnDeviceLLM {
       enhanced = enhanced.replace(/\bThis shows\b/gi, 'This reveals');
       enhanced = enhanced.replace(/\bWe can see\b/gi, 'We discover');
       enhanced = enhanced.replace(/\bIt means\b/gi, 'This signifies');
+    }
+    
+    return enhanced;
+  }
+
+  private expandContent(text: string): string {
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    const expandedSentences = sentences.map(sentence => {
+      let s = sentence.trim();
+      if (!s) return s;
+      
+      // Add detailed expansions based on content patterns
+      const expansions = [
+        // Expand simple statements with context
+        { 
+          pattern: /\b(technology|innovation|development)\b/gi, 
+          expansion: ' This technological advancement represents a significant shift in how we approach modern challenges and opens up new possibilities for future innovation'
+        },
+        {
+          pattern: /\b(important|significant|crucial)\b/gi,
+          expansion: ', fundamentally changing the landscape and creating ripple effects that extend far beyond initial expectations'
+        },
+        {
+          pattern: /\b(shows|demonstrates|proves)\b/gi,
+          expansion: ' and provides compelling evidence that illustrates the deeper implications'
+        },
+        {
+          pattern: /\b(problem|issue|challenge)\b/gi,
+          expansion: ' - a complex situation that requires careful analysis and creative problem-solving approaches'
+        },
+        {
+          pattern: /\b(solution|answer|approach)\b/gi,
+          expansion: ' that addresses multiple facets of the situation while considering long-term sustainability and practical implementation'
+        },
+        {
+          pattern: /\b(impact|effect|influence)\b/gi,
+          expansion: ' that resonates across various sectors and stakeholder groups, creating both immediate changes and long-term transformations'
+        },
+        // More specific patterns for better variety
+        {
+          pattern: /\b(understand|realize|recognize)\b/gi,
+          expansion: ', gaining deeper insights into the complexities and nuances involved'
+        },
+        {
+          pattern: /\b(create|build|develop|make)\b/gi,
+          expansion: ' through innovative processes and creative methodologies'
+        },
+        {
+          pattern: /\b(work|function|operate)\b/gi,
+          expansion: ' in sophisticated ways that reflect years of refinement and optimization'
+        },
+        {
+          pattern: /\b(change|transform|evolve)\b/gi,
+          expansion: ' dramatically, reshaping expectations and establishing new standards'
+        },
+        {
+          pattern: /\b(learn|discover|find)\b/gi,
+          expansion: ' through systematic exploration and careful observation'
+        }
+      ];
+      
+      expansions.forEach(exp => {
+        if (exp.pattern.test(s)) { // Always expand when pattern matches
+          s = s.replace(exp.pattern, (match) => match + exp.expansion);
+        }
+      });
+      
+      return s;
+    });
+    
+    return expandedSentences.join('. ') + '.';
+  }
+
+  private addCreativeElements(text: string): string {
+    let enhanced = text;
+    
+    // Add specific examples and analogies with variations
+    const creativePatterns = [
+      {
+        pattern: /\b(understand|comprehend|grasp)\b/gi,
+        replacements: [
+          'truly understand',
+          'deeply comprehend',
+          'clearly grasp',
+          'genuinely appreciate'
+        ]
+      },
+      {
+        pattern: /\b(fast|quick|rapid)\b/gi,
+        replacements: [
+          'lightning-fast',
+          'remarkably swift',
+          'impressively quick',
+          'blazingly rapid'
+        ]
+      },
+      {
+        pattern: /\b(grows|increases|expands)\b/gi,
+        replacements: [
+          'flourishes and expands',
+          'steadily grows',
+          'progressively increases',
+          'dynamically evolves'
+        ]
+      },
+      {
+        pattern: /\b(difficult|hard|challenging)\b/gi,
+        replacements: [
+          'genuinely challenging',
+          'notably complex',
+          'surprisingly intricate',
+          'particularly demanding'
+        ]
+      },
+      {
+        pattern: /\b(simple|easy|straightforward)\b/gi,
+        replacements: [
+          'elegantly simple',
+          'refreshingly straightforward',
+          'surprisingly accessible',
+          'remarkably intuitive'
+        ]
+      }
+    ];
+    
+    creativePatterns.forEach(pattern => {
+      if (pattern.pattern.test(enhanced)) {
+        // Only apply 50% of the time to add variety
+        if (Math.random() > 0.5) {
+          const randomReplacement = pattern.replacements[Math.floor(Math.random() * pattern.replacements.length)];
+          enhanced = enhanced.replace(pattern.pattern, randomReplacement);
+        }
+      }
+    });
+    
+    // Add transitional phrases for better flow (rarely)
+    const transitions = [
+      'What\'s particularly fascinating is that',
+      'Consider this:',
+      'Here\'s what makes this interesting:',
+      'The remarkable thing about this is',
+      'What stands out most is',
+      'It\'s worth noting that',
+      'Interestingly enough,',
+      'More importantly,'
+    ];
+    
+    // Only add transitions to much longer text and less frequently
+    if (enhanced.length > 200 && Math.random() > 0.7) { // 30% chance, longer text only
+      const randomTransition = transitions[Math.floor(Math.random() * transitions.length)];
+      const midPoint = Math.floor(enhanced.length / 2);
+      const insertPoint = enhanced.indexOf('. ', midPoint);
+      if (insertPoint > -1) {
+        enhanced = enhanced.substring(0, insertPoint + 2) + randomTransition + ' ' + 
+                  enhanced.substring(insertPoint + 2);
+      }
     }
     
     return enhanced;

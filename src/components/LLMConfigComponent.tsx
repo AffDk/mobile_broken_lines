@@ -11,10 +11,10 @@ import {
   Modal,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import OnDeviceLLM, { SystemPromptConfig, LLMConfig } from '../services/llmService';
+import realLLMService, { RealLLMService, SystemPromptConfig, LLMConfig } from '../services/realLLMService';
 
 interface LLMConfigComponentProps {
-  llm: OnDeviceLLM;
+  llm: typeof realLLMService;
   visible: boolean;
   onClose: () => void;
   onConfigUpdate: (config: SystemPromptConfig) => void;
@@ -38,8 +38,10 @@ const LLMConfigComponent: React.FC<LLMConfigComponentProps> = ({
   const [modelInfo, setModelInfo] = useState<any>(null);
 
   useEffect(() => {
-    loadConfiguration();
-    updateModelInfo();
+    if (visible) {
+      loadConfiguration();
+      updateModelInfo();
+    }
   }, [visible]);
 
   const loadConfiguration = async () => {
@@ -84,6 +86,9 @@ const LLMConfigComponent: React.FC<LLMConfigComponentProps> = ({
       
       onConfigUpdate(promptConfig);
       
+      // Refresh model info after saving
+      await updateModelInfo();
+      
       Alert.alert('Success', 'Configuration saved successfully!');
     } catch (error) {
       console.error('Failed to save LLM configuration:', error);
@@ -91,9 +96,15 @@ const LLMConfigComponent: React.FC<LLMConfigComponentProps> = ({
     }
   };
 
-  const updateModelInfo = () => {
-    const info = llm.getModelInfo();
-    setModelInfo(info);
+  const updateModelInfo = async () => {
+    try {
+      const status = await llm.getCurrentModelStatus();
+      setModelInfo(status);
+    } catch (error) {
+      console.error('Failed to get model status:', error);
+      const fallbackInfo = llm.getModelInfo();
+      setModelInfo(fallbackInfo);
+    }
   };
 
   const resetToDefaults = () => {
@@ -143,9 +154,14 @@ const LLMConfigComponent: React.FC<LLMConfigComponentProps> = ({
       const testText = "This is test text for checking the LLM configuration.";
       const result = await llm.enhanceText(testText);
       
+      // Create status message based on whether fallback was used
+      const statusInfo = result.isFallback 
+        ? `\n\n⚠️ Using intelligent fallback system\nReason: ${result.fallbackReason}\nModel: ${result.modelUsed}`
+        : `\n\n✅ Using real AI model\nModel: ${result.modelUsed}\nConfidence: ${(result.confidence * 100).toFixed(1)}%`;
+      
       Alert.alert(
         'Test Result',
-        `Original: "${testText}"\n\nEnhanced: "${result.enhancedText}"\n\nProcessing time: ${result.processingTime}ms`,
+        `Original: "${testText}"\n\nEnhanced: "${result.enhancedText}"\n\nProcessing time: ${result.processingTime}ms${statusInfo}`,
         [{ text: 'OK' }]
       );
     } catch (error) {
@@ -170,9 +186,27 @@ const LLMConfigComponent: React.FC<LLMConfigComponentProps> = ({
               <Text style={styles.sectionTitle}>Model Information</Text>
               <View style={styles.infoCard}>
                 <Text style={styles.infoText}>Model: {modelInfo.modelType}</Text>
-                <Text style={styles.infoText}>Status: {modelInfo.isLoaded ? '✅ Loaded' : '❌ Not Loaded'}</Text>
+                <Text style={styles.infoText}>
+                  Status: {modelInfo.hasRealModel ? (
+                    <Text style={{ color: '#4CAF50' }}>✅ Real AI Model Active</Text>
+                  ) : (
+                    <Text style={{ color: '#FF9800' }}>⚠️ Using Fallback System</Text>
+                  )}
+                </Text>
+                <Text style={styles.infoText}>Details: {modelInfo.status}</Text>
+                {modelInfo.error && (
+                  <Text style={[styles.infoText, { color: '#f44336' }]}>
+                    Error: {modelInfo.error}
+                  </Text>
+                )}
                 <Text style={styles.infoText}>Max Tokens: {modelInfo.config.maxTokens}</Text>
                 <Text style={styles.infoText}>Temperature: {modelInfo.config.temperature}</Text>
+                <TouchableOpacity 
+                  style={styles.refreshStatusButton}
+                  onPress={() => updateModelInfo()}
+                >
+                  <Text style={styles.refreshStatusText}>🔄 Refresh Status</Text>
+                </TouchableOpacity>
               </View>
             </View>
           )}
@@ -505,6 +539,19 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  refreshStatusButton: {
+    backgroundColor: '#2196F3',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  refreshStatusText: {
+    color: '#fff',
+    fontSize: 12,
     fontWeight: '600',
   },
 });

@@ -4,7 +4,7 @@ module.exports = {
       platforms: {
         android: {
           sourceDir: '../node_modules/react-native-vector-icons/android',
-          packageImportPath: 'import io.github.react_native_vector_icons.ReactNativeVectorIconsPackage;',
+          packageImportPath: 'import com.oblador.vectoricons.VectorIconsPackage;',
         },
       },
     },

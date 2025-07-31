@@ -20,7 +20,7 @@ import LLMConfigComponent from '../components/LLMConfigComponent';
 import { apiService, BlogPost } from '../services/apiService';
 import { APP_CONFIG } from '../config/config';
 import { RootStackParamList } from '../navigation/RootNavigator';
-import OnDeviceLLM, { SystemPromptConfig } from '../services/llmService';
+import realLLMService, { SystemPromptConfig } from '../services/realLLMService';
 
 type EditPostScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 type EditPostScreenRouteProp = RouteProp<RootStackParamList, 'EditPost'>;
@@ -38,13 +38,26 @@ const EditPostScreen: React.FC = () => {
   const [enhancing, setEnhancing] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [showLLMConfig, setShowLLMConfig] = useState(false);
-  
-  // LLM instance
-  const llmRef = useRef<OnDeviceLLM>(new OnDeviceLLM());
 
   useEffect(() => {
     loadPost();
   }, [postId]);
+
+  useEffect(() => {
+    const initializeLLM = async () => {
+      try {
+        // Add delay to prevent simultaneous initialization attempts
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 2000));
+        await realLLMService.initialize();
+        console.log('✅ LLM service ready for EditPostScreen');
+      } catch (error) {
+        console.log('⚠️ LLM initialization completed with fallback for EditPostScreen');
+      }
+    };
+    
+    // Don't block the component, initialize in background
+    initializeLLM();
+  }, []);
 
   useEffect(() => {
     if (post) {
@@ -150,6 +163,10 @@ const EditPostScreen: React.FC = () => {
     }
   };
 
+  const handleLLMConfigUpdate = (config: SystemPromptConfig) => {
+    console.log('LLM configuration updated:', config);
+  };
+
   if (loading) {
     return (
       <View style={styles.centerContainer}>
@@ -252,6 +269,14 @@ const EditPostScreen: React.FC = () => {
           </View>
         )}
       </ScrollView>
+
+      {/* LLM Configuration Modal */}
+      <LLMConfigComponent
+        llm={realLLMService}
+        visible={showLLMConfig}
+        onClose={() => setShowLLMConfig(false)}
+        onConfigUpdate={handleLLMConfigUpdate}
+      />
     </KeyboardAvoidingView>
   );
 };
